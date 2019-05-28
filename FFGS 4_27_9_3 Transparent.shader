@@ -1,3 +1,5 @@
+// lighting is too hard if you wanna show me how to do it right please be my guest lmao
+// in other words help me big dum dum
 Shader "Herpu/.FFGS/Transparent 4.27.9.3 lighting"
 {
     Properties
