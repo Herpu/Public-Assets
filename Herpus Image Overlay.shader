@@ -9,6 +9,7 @@ Shader "Herpu/.Image Overlay" {
         [MaterialToggle] _removealpha ("Subtract Alpha", Float ) = 0 
 		[HideInInspector]_Cutoff ("Alpha cutoff", Range(0,1)) = 0.5
 	[Header(Spritesheet Options)]
+	[Enum(Off,0,On,1)] ClampEdge("Clamp Edges", Int) = 0
         _Utile ("U tile", Float ) = 1
         _Vtile ("V tile", Float ) = 1
         _time ("time", Range(0, 1)) = 0
@@ -76,6 +77,7 @@ _maxdist("Maximum Distance", Float) = 10
 			float _maxdist;
 			float _offX;
 			float _offY;
+			float ClampEdge;
 			
 			
             struct VertexInput {
@@ -104,18 +106,23 @@ _maxdist("Maximum Distance", Float) = 10
                 float4 objPos = mul ( unity_ObjectToWorld, float4(0,0,0,1) );
                 float3 recipObjScale = float3( length(unity_WorldToObject[0].xyz), length(unity_WorldToObject[1].xyz), length(unity_WorldToObject[2].xyz) );
 
-                float3 node_2096 = mul( UNITY_MATRIX_V, float4((i.posWorld.rgb-_WorldSpaceCameraPos),0) ).xyz;
-                float2 node_7310 = (node_2096.rgb.rg/node_2096.rgb.b).rg;
-                float2 node_9733 = lerp( (1.0 - ((float2((node_7310.r*(_ScreenParams.a/_ScreenParams.b)),(node_7310.g*2.0))*_zoom*_zoom_copy)+0.5)), i.uv0, _overlayoruv ).rg;
-                float node_6042 = 1.0;
-            
-                float node_4846 = (floor((_time*(_Utile*_Vtile)))/_Utile);
-				float _U = ((node_9733.r*(node_6042/_Utile))+(floor((_time*(_Utile*_Vtile)))/_Utile));
-				float _V = ((node_9733.g*(node_6042/_Vtile))-(floor((_time*_Vtile))/_Vtile));
+                float3 UV3 = mul( UNITY_MATRIX_V, float4((i.posWorld.rgb-_WorldSpaceCameraPos),0) ).xyz;
+                float2 UV2 = (UV3.rgb.rg/UV3.rgb.b).rg;
+				float2 offset = float2(_offX,_offY);
+                float2 SCUV = lerp( (1.0 - ((float2((UV2.r*(_ScreenParams.a/_ScreenParams.b)),(UV2.g*2.0))*_zoom*_zoom_copy)+0.5)), i.uv0, _overlayoruv ).rg + offset;
+				if(ClampEdge==1){
+				if(SCUV.r>1)discard;
+				if(SCUV.r<0)discard;
+				if(SCUV.g>1)discard;
+				if(SCUV.g<0)discard;
+								}
+								
+				float _time2 = _time;
+				float _U = ((SCUV.r*(1/_Utile))+(floor((_time2*(_Utile*_Vtile)))/_Utile));
+				float _V = ((SCUV.g*(1/_Vtile))-(floor((_time2*_Vtile))/_Vtile))-(1/_Vtile);
 				
                 float2 UVs = float2(_U,_V);
-				float2 UVs2 = float2(UVs.r+(_offX/_Utile),UVs.g+(_offY/_Vtile));
-                float4 _MainTex_var = tex2D(_MainTex,TRANSFORM_TEX(UVs2, _MainTex));
+                float4 _MainTex_var = tex2D(_MainTex,TRANSFORM_TEX(UVs, _MainTex));
 			//	float4 _ClampTex= tex2D(_MainTex_var,TRANSFORM_TEX(
                 float3 emissive = _MainTex_var.rgb*_Color.rgb;
                 float3 finalColor = emissive;
@@ -138,3 +145,4 @@ float DMULT = ((1.0 - saturate((clamp((distance(_WorldSpaceCameraPos,objPos.rgb)
     FallBack "Diffuse"
 
 }
+
