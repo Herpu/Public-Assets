@@ -78,8 +78,7 @@ _maxdist("Maximum Distance", Float) = 10
 			float _offX;
 			float _offY;
 			float ClampEdge;
-			
-			
+
             struct VertexInput {
                 float4 vertex : POSITION;
                 float2 texcoord0 : TEXCOORD0;
@@ -88,7 +87,6 @@ _maxdist("Maximum Distance", Float) = 10
                 float4 pos : SV_POSITION;
                 float2 uv0 : TEXCOORD0;
                 float4 posWorld : TEXCOORD1;
-
             };
             VertexOutput vert (VertexInput v) {
                 VertexOutput o = (VertexOutput)0;
@@ -98,14 +96,11 @@ _maxdist("Maximum Distance", Float) = 10
                 v.vertex.xyz += lerp( float3(0,0,0), ((_WorldSpaceCameraPos-objPos.rgb)*recipObjScale), _movetoview );
                 o.posWorld = mul(unity_ObjectToWorld, v.vertex);
                 o.pos = UnityObjectToClipPos( v.vertex );
-				
-
                 return o;
             }
             float4 frag(VertexOutput i) : COLOR {
                 float4 objPos = mul ( unity_ObjectToWorld, float4(0,0,0,1) );
                 float3 recipObjScale = float3( length(unity_WorldToObject[0].xyz), length(unity_WorldToObject[1].xyz), length(unity_WorldToObject[2].xyz) );
-
                 float3 UV3 = mul( UNITY_MATRIX_V, float4((i.posWorld.rgb-_WorldSpaceCameraPos),0) ).xyz;
                 float2 UV2 = (UV3.rgb.rg/UV3.rgb.b).rg;
 				float2 offset = float2(_offX,_offY);
@@ -115,27 +110,20 @@ _maxdist("Maximum Distance", Float) = 10
 				if(SCUV.r<0)discard;
 				if(SCUV.g>1)discard;
 				if(SCUV.g<0)discard;
-								}
-								
+						}			
 				float _time2 = _time;
 				float _U = ((SCUV.r*(1/_Utile))+(floor((_time2*(_Utile*_Vtile)))/_Utile));
 				float _V = ((SCUV.g*(1/_Vtile))-(floor((_time2*_Vtile))/_Vtile))-(1/_Vtile);
-				
-                float2 UVs = float2(_U,_V);
+                float2 UVs = float2(_U,_V)-float2(floor(_U),floor(_V));
                 float4 _MainTex_var = tex2D(_MainTex,TRANSFORM_TEX(UVs, _MainTex));
-			//	float4 _ClampTex= tex2D(_MainTex_var,TRANSFORM_TEX(
                 float3 emissive = _MainTex_var.rgb*_Color.rgb;
                 float3 finalColor = emissive;
-
-			//	float4 objPos = mul ( unity_ObjectToWorld, float4(0,0,0,1) );
-float dista = (_maxdist*0.5)-(_mindist*0.5);
-float mind = (_mindist*0.5);
-float maxd = (_maxdist*0.5);
-float DMULT = ((1.0 - saturate((clamp((distance(_WorldSpaceCameraPos,objPos.rgb)-mind),0.0,maxd)/dista))));	
-				
-				
-				float alpha_ = _MainTex_var.a*_Color.a*(_opacity*DMULT);
-				float minusalpha = (alpha_*_removealpha)+(1-_removealpha);
+			float dista = (_maxdist*0.5)-(_mindist*0.5);
+			float mind = (_mindist*0.5);
+			float maxd = (_maxdist*0.5);
+			float DMULT = ((1.0 - saturate((clamp((distance(_WorldSpaceCameraPos,objPos.rgb)-mind),0.0,maxd)/dista))));	
+			float alpha_ = _MainTex_var.a*_Color.a*(_opacity*DMULT);
+			float minusalpha = (alpha_*_removealpha)+(1-_removealpha);
 				
                 return fixed4(finalColor*minusalpha,alpha_);
             }
@@ -145,4 +133,3 @@ float DMULT = ((1.0 - saturate((clamp((distance(_WorldSpaceCameraPos,objPos.rgb)
     FallBack "Diffuse"
 
 }
-
